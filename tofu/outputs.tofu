@@ -5,6 +5,8 @@
 # Schluessel "<team>-<username>", wie vom AppStore fuer den Mailversand
 # verlangt. protocol "web": die Mail zeigt die Team-URL aus team_vms; dort
 # fuehrt ein Link zur eigenen IDE, die nach dem Passwort fragt.
+# Bewusst ohne "port": aus ip+port baut das Frontend selbst einen Link mit
+# http:// (und IPv6 ohne Klammern) statt die Team-URL zu nehmen.
 output "user_accounts" {
   description = "[CONTRACT] User accounts mit Login-Informationen"
   sensitive   = true
@@ -13,7 +15,6 @@ output "user_accounts" {
       type     = "password"
       protocol = "web"
       ip       = local.team_ip[user.team]
-      port     = 443
       username = user.username
       auth     = random_password.user_passwords[uid].result
       email    = user.email
