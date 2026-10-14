@@ -120,6 +120,12 @@ Auf der VM (als Admin über die OpenStack-Konsole):
 
 Der AppStore deployt nur Git-Tags im Format `v<Major>.<Minor>.<Patch>`.
 
+### v1.0.2
+
+Einrichtung lief nicht durch: cloud-init startet die Skripte ohne `HOME`,
+das code-server-Installationsskript brach daran ab. Der AppStore zeigt
+jetzt die HTTPS-Team-URL statt `http://<ip>:443`.
+
 ### v1.0.1
 
 Eigene Security Group für 80/443 über IPv6: die gemeinsame Default-SG

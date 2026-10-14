@@ -9,6 +9,10 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
+# cloud-init startet runcmd ohne HOME; das code-server-Installationsskript
+# (set -u) und caddy brauchen es.
+export HOME=/root
+
 echo "Updating package lists..."
 apt-get update -y
 apt-get install -y curl wget git vim nano htop jq unzip bash-completion ufw ca-certificates

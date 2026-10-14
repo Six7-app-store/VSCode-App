@@ -8,6 +8,9 @@ set -euo pipefail
 # Idempotent.
 # -----------------------------------------------------------------------------
 
+# cloud-init startet runcmd ohne HOME; caddy braucht es.
+export HOME=/root
+
 USERS_FILE=/etc/vscode-app/users
 WEB_ROOT=/var/www/vscode-app
 CADDY_CA=/var/lib/caddy/.local/share/caddy/pki/authorities/local/root.crt
