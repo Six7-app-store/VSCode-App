@@ -38,6 +38,14 @@ variable "shared_secgroup_id" {
   default     = "7ca4f889-e11e-4a16-83a8-73a77ebdbbe6"
 }
 
+# Die IDE ist passwortgeschuetzt; trotzdem besser auf das Campusnetz
+# eingrenzen, wenn niemand von zuhause arbeiten muss.
+variable "web_source_cidr" {
+  description = "IPv6-Präfix, das auf Port 80/443 (IDE) zugreifen darf"
+  type        = string
+  default     = "::/0"
+}
+
 # Jeder Nutzer hat einen eigenen code-server; die Java- und Python-
 # Sprachserver brauchen je Person einige hundert MB RAM. gp1.small reicht
 # nur fuer ein bis zwei Personen, fuer grosse Teams gp1.large waehlen.

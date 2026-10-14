@@ -61,6 +61,7 @@ Python, Java, JavaScript und C.
 | Betriebssystem | Ubuntu 24.04, Software wird beim ersten Boot per cloud-init installiert |
 | Erreichbarkeit | IPv6-Adresse der VM, HTTPS auf 443, SSH auf 22 |
 | Offene Ports | 22 (SSH), 80 (Weiterleitung auf HTTPS), 443 (IDE) |
+| Security Group | eigene Gruppe `vscode-web-<zufall>` für 80/443 über IPv6, zusätzlich zur gemeinsamen |
 | Bereit nach | ca. 6–7 Minuten nach dem Start der VM |
 | Obergrenze | `max_teams`, Standard 15 Team-VMs pro Deployment |
 
@@ -78,6 +79,7 @@ hundert MB RAM. `gp1.medium` reicht für kleine Teams, ab etwa fünf Personen
 | `flavor_name` | Flavor-Auswahl | `gp1.medium` |
 | `floating_ip_pool` | External-Network-Auswahl (derzeit ungenutzt) | `DHBW` |
 | `max_teams` | Obergrenze | `15` |
+| `web_source_cidr` | IPv6-Präfix für 80/443 | `::/0` (überall) |
 
 `users` setzt der AppStore selbst.
 
@@ -117,6 +119,12 @@ Auf der VM (als Admin über die OpenStack-Konsole):
 ## Release
 
 Der AppStore deployt nur Git-Tags im Format `v<Major>.<Minor>.<Patch>`.
+
+### v1.0.1
+
+Eigene Security Group für 80/443 über IPv6: die gemeinsame Default-SG
+lässt HTTPS nicht durch, die Startseite war daher nicht erreichbar. Neue
+Variable `web_source_cidr`.
 
 ### v1.0.0
 

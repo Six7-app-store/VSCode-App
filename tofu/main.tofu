@@ -120,6 +120,38 @@ data "openstack_networking_network_v2" "external" {
 }
 
 ############################
+# SECURITY GROUP FUER HTTPS
+############################
+
+# Die gemeinsame Default-SG laesst 80/443 nicht durch und gehoert nicht dieser
+# App (wie bei Kali fuer RDP). Deshalb eine eigene, zusaetzlich an der VM.
+# ethertype = "IPv6" ist entscheidend: die VM ist nur ueber IPv6 erreichbar.
+# Der Zufallsanhang verhindert doppelte Namen bei mehreren Deployments im
+# selben Projekt - die Instanz referenziert Security Groups per Name.
+resource "random_string" "secgroup_suffix" {
+  length  = 6
+  special = false
+  upper   = false
+}
+
+resource "openstack_networking_secgroup_v2" "web" {
+  name        = "${local.app_name}-web-${random_string.secgroup_suffix.result}"
+  description = "HTTPS-Zugang (80/443) fuer VS Code im Browser"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "web_v6" {
+  for_each = toset(["80", "443"])
+
+  direction         = "ingress"
+  ethertype         = "IPv6"
+  protocol          = "tcp"
+  port_range_min    = tonumber(each.key)
+  port_range_max    = tonumber(each.key)
+  remote_ip_prefix  = var.web_source_cidr
+  security_group_id = openstack_networking_secgroup_v2.web.id
+}
+
+############################
 # EINE VM PRO TEAM
 ############################
 
@@ -131,7 +163,8 @@ resource "openstack_compute_instance_v2" "team_vm" {
   flavor_name = var.flavor_name
   key_pair    = null
 
-  security_groups = [var.shared_secgroup_id]
+  # Security Groups per NAME; die geteilte kommt als UUID/Name aus der Variable.
+  security_groups = [var.shared_secgroup_id, openstack_networking_secgroup_v2.web.name]
 
   timeouts {
     create = "15m"
@@ -166,7 +199,7 @@ resource "openstack_compute_instance_v2" "team_vm" {
     app  = local.app_name
   }
 
-  depends_on = [terraform_data.team_limit]
+  depends_on = [terraform_data.team_limit, openstack_networking_secgroup_rule_v2.web_v6]
 }
 
 ############################
