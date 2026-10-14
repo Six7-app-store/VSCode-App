@@ -1,0 +1,10 @@
+# OpenTofu
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+*.tfvars
+*_override.tofu
+
+# OS files
+.DS_Store
