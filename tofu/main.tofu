@@ -235,7 +235,9 @@ resource "time_sleep" "wait_for_ide" {
 
 # Oeffentlich erreichbar ist nur die IPv6-Adresse (die IPv4 ist eine
 # projektinterne NAT-Adresse). team_ip ohne Klammern (fuer ssh), team_url
-# mit Klammern, wie es ein Browser fuer IPv6 verlangt.
+# mit Klammern, wie es ein Browser fuer IPv6 verlangt. access_ip_v6 liefert
+# der Provider schon mit Klammern; trim() nimmt sie ab, sonst entstuende
+# https://[[...]]/.
 locals {
   team_ip = {
     for team in local.teams_list : team => (
@@ -243,7 +245,7 @@ locals {
       ? openstack_networking_floatingip_v2.team_fip[team].address
       : (
         openstack_compute_instance_v2.team_vm[team].access_ip_v6 != ""
-        ? openstack_compute_instance_v2.team_vm[team].access_ip_v6
+        ? trim(openstack_compute_instance_v2.team_vm[team].access_ip_v6, "[]")
         : openstack_compute_instance_v2.team_vm[team].network[0].fixed_ip_v4
       )
     )
