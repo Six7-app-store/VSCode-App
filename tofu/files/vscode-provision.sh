@@ -118,12 +118,18 @@ ufw --force enable
 # Ohne Domain kein Let's-Encrypt-Zertifikat: Caddy stellt eines aus seiner
 # eigenen CA fuer die IP-Adressen aus. Die CA liegt zum Herunterladen auf
 # der Startseite, damit man ihr im Browser vertrauen kann.
-ipv6=$(ip -6 -o addr show scope global | awk '{print $4}' | cut -d/ -f1 | head -n1 || true)
-ipv4=$(ip -4 -o addr show scope global | awk '{print $4}' | cut -d/ -f1 | head -n1 || true)
-
+#
+# Alle globalen Adressen, nicht nur die erste: bei ip_mode dual hat die VM
+# zwei IPv4 (die private im IPv6-Netz und die oeffentliche der zweiten
+# Schnittstelle), und Caddy beantwortet nur Adressen, die im Caddyfile
+# stehen.
 sites=()
-if [ -n "$ipv6" ]; then sites+=("https://[$ipv6]"); fi
-if [ -n "$ipv4" ]; then sites+=("https://$ipv4"); fi
+while read -r addr; do
+  sites+=("https://[$addr]")
+done < <(ip -6 -o addr show scope global | awk '{print $4}' | cut -d/ -f1)
+while read -r addr; do
+  sites+=("https://$addr")
+done < <(ip -4 -o addr show scope global | awk '{print $4}' | cut -d/ -f1)
 if [ "${#sites[@]}" -eq 0 ]; then
   log "ERROR: keine IP-Adresse gefunden"
   exit 1
