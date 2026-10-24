@@ -59,9 +59,9 @@ Python, Java, JavaScript und C.
 | VMs | **eine VM pro Team** |
 | Flavor | im Wizard wählbar, Standard `gp1.medium` |
 | Betriebssystem | Ubuntu 24.04, Software wird beim ersten Boot per cloud-init installiert |
-| Erreichbarkeit | IPv6-Adresse der VM, HTTPS auf 443, SSH auf 22 |
+| Erreichbarkeit | wählbar über IPv6 (Standard), IPv4 oder beides, HTTPS auf 443, SSH auf 22 |
 | Offene Ports | 22 (SSH), 80 (Weiterleitung auf HTTPS), 443 (IDE) |
-| Security Group | eigene Gruppe `vscode-web-<zufall>` für 80/443 über IPv6, zusätzlich zur gemeinsamen |
+| Security Group | eigene Gruppe `vscode-web-<zufall>` für 80/443 je gewählter Adressfamilie, zusätzlich zur gemeinsamen |
 | Bereit nach | ca. 6–7 Minuten nach dem Start der VM |
 | Obergrenze | `max_teams`, Standard 15 Team-VMs pro Deployment |
 
@@ -74,14 +74,34 @@ hundert MB RAM. `gp1.medium` reicht für kleine Teams, ab etwa fünf Personen
 | Variable | Wizard-Feld | Standard |
 |---|---|---|
 | `image_name` | Image-Auswahl | `Ubuntu 24.04` |
-| `network_uuid` | Netzwerk-Auswahl | DHBWV6-Netz |
+| `ip_mode` | Adressfamilie: `ipv4`, `ipv6` oder `dual` | `ipv6` |
+| `network_uuid` | Netz mit öffentlicher IPv6, für `ipv6` und `dual` | DHBWV6-Netz |
+| `network_v4_uuid` | Netz mit öffentlich gerouteter IPv4, für `ipv4` und `dual` | leer |
 | `shared_secgroup_id` | Security-Group-Auswahl | gemeinsame App-Store-SG |
 | `flavor_name` | Flavor-Auswahl | `gp1.medium` |
 | `floating_ip_pool` | External-Network-Auswahl (derzeit ungenutzt) | `DHBW` |
 | `max_teams` | Obergrenze | `15` |
 | `web_source_cidr` | IPv6-Präfix für 80/443 | `::/0` (überall) |
+| `web_source_cidr_v4` | IPv4-Präfix für 80/443, nur bei `ipv4` und `dual` | `0.0.0.0/0` (überall) |
 
 `users` setzt der AppStore selbst.
+
+## Adressfamilie (`ip_mode`)
+
+| `ip_mode` | Schnittstellen | Team-URL nennt |
+|---|---|---|
+| `ipv6` (Standard) | eine, im Netz `network_uuid` | die IPv6 |
+| `ipv4` | eine, im Netz `network_v4_uuid` | die IPv4 |
+| `dual` | Hauptschnittstelle in `network_uuid`, zweite in `network_v4_uuid` | die IPv4 |
+
+Wie bei der Ubuntu-App: Bei `dual` hängt OpenTofu die IPv4-Schnittstelle
+erst an die laufende VM, cloud-init wartet auf sie und richtet sie mit
+eigener Routing-Tabelle ein, bevor Caddy startet. Caddy stellt das
+Zertifikat für alle Adressen der VM aus. Die IPv4 im Netz `DHBWV6` ist eine
+private NAT-Adresse; öffentliches IPv4 gibt es nur über ein eigenes
+IPv4-Netz, deshalb brauchen `ipv4` und `dual` die Variable `network_v4_uuid`.
+
+Auf newstack erprobt ist bisher nur `ipv6`.
 
 ## Aufbau
 
@@ -113,12 +133,25 @@ Auf der VM (als Admin über die OpenStack-Konsole):
 
 ## Lokale Checks
 
-    cd tofu && tofu fmt -check && tofu init -backend=false && tofu validate
+    cd tofu && tofu fmt -check && tofu init -backend=false && tofu validate && tofu test
     shellcheck tofu/files/*.sh
+
+`tofu test` mockt alle Provider und braucht keinen OpenStack-Zugang.
 
 ## Release
 
 Der AppStore deployt nur Git-Tags im Format `v<Major>.<Minor>.<Patch>`.
+
+### v1.1.0
+
+Adressfamilie wählbar: `ip_mode` mit `ipv4`, `ipv6` oder `dual`, neue
+Variablen `network_v4_uuid` und `web_source_cidr_v4`. Caddy nimmt alle
+Adressen der VM ins Zertifikat statt nur der ersten. Tests mit gemockten
+Providern unter `tofu/tests/`.
+
+### v1.0.3
+
+Die Team-URL enthielt die IPv6 in doppelten Klammern.
 
 ### v1.0.2
 
